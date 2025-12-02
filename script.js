@@ -12,11 +12,11 @@ let mergeYD = false; // when true YD is merged into CP (3-plant view)
 
 // Global field visibility (GRN is always enabled)
 let fieldEnabled = {
-    import: true,
+    import: false,
     dispatched: true,
     export: true,
     wasteCusde: true,
-    wasteAct: true
+    wasteAct: false
 };
 
 // Load persisted field visibility if present
@@ -1019,4 +1019,5 @@ function formatNumber(num) {
 function getMonthName(monthNum) {
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return months[monthNum-1] || '';
+
 }
