@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Import vs Dispatched Analytics</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">🏭 Multi-Plant Analytics</div>
+            <button class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#" class="nav-link active" data-page="dashboard">Dashboard</a></li>
+                <li><a href="#" class="nav-link" data-page="settings">Settings</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Dashboard Page -->
+    <div id="dashboardPage" class="page active">
+        <div class="container">
+            <h1 class="page-title">Import vs Dispatched Analytics</h1>
+
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card blue">
+                    <div class="kpi-icon">📦</div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">Total GRN (All Plants)</div>
+                        <div class="kpi-value" id="totalGRN">0</div>
+                    </div>
+                </div>
+
+                <div class="kpi-card green">
+                    <div class="kpi-icon">✅</div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">Total Processed</div>
+                        <div class="kpi-value" id="totalProcessed">0</div>
+                        <div class="kpi-sublabel">Local + Export + Waste (CUSDE)</div>
+                    </div>
+                </div>
+
+                <div class="kpi-card orange">
+                    <div class="kpi-icon">📊</div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">Balance</div>
+                        <div class="kpi-value" id="totalBalance">0</div>
+                        <div class="kpi-sublabel">GRN - Processed</div>
+                    </div>
+                </div>
+
+                <div class="kpi-card purple">
+                    <div class="kpi-icon">⚡</div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">Overall Utilization</div>
+                        <div class="kpi-value" id="overallUtilization">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Monthly Breakdown Table -->
+            <div class="breakdown-section">
+                <div class="breakdown-header">
+                    <h2>📋 Detailed Monthly Breakdown</h2>
+                    <div style="display:flex; gap:1rem; align-items:center;">
+                        <div class="plant-tabs" id="plantTabs">
+                            <button class="tab-btn active" data-plant="all">ALL PLANTS</button>
+                            <button class="tab-btn" data-plant="ep1">EP 1</button>
+                            <button class="tab-btn" data-plant="ep2">EP 2</button>
+                            <button class="tab-btn" data-plant="cp">CP</button>
+                            <button class="tab-btn" data-plant="yd" id="ydTabBtn">YD</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="breakdown-table" id="breakdownTable">
+                        <thead id="breakdownThead"></thead>
+                        <tbody id="breakdownBody"></tbody>
+                        <tfoot id="breakdownFooter"></tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Plant-wise Comparison Cards -->
+            <div class="plant-comparison">
+                <h2>🏭 Plant-wise Performance</h2>
+                <div class="plant-cards-grid" id="plantCardsGrid"></div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <!-- Plant Performance Chart -->
+                <div class="chart-card full-width">
+                    <h3>Plant-wise Performance Comparison</h3>
+                    <canvas id="plantPerformanceChart"></canvas>
+                </div>
+
+                <!-- Monthly Trends Chart -->
+                <div class="chart-card full-width">
+                    <h3>Monthly GRN Trends</h3>
+                    <canvas id="monthlyTrendsChart"></canvas>
+                </div>
+
+                <!-- Utilization Comparison Chart -->
+                <div class="chart-card full-width">
+                    <h3>Utilization Rate Comparison</h3>
+                    <canvas id="utilizationChart"></canvas>
+                </div>
+
+                <!-- Distribution Pie Charts -->
+                <div class="chart-card">
+                    <h3>EP 1 - Distribution</h3>
+                    <canvas id="ep1PieChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h3>EP 2 - Distribution</h3>
+                    <canvas id="ep2PieChart"></canvas>
+                </div>
+
+                <div class="chart-card" id="cpPieCard">
+                    <h3>CP - Distribution</h3>
+                    <canvas id="cpPieChart"></canvas>
+                </div>
+
+                <div class="chart-card" id="ydPieCard">
+                    <h3>YD - Distribution</h3>
+                    <canvas id="ydPieChart"></canvas>
+                </div>
+
+                <!-- Flow Analysis -->
+                <div class="chart-card full-width">
+                    <h3>Complete Flow Analysis</h3>
+                    <div class="flow-analysis" id="flowAnalysis"></div>
+                </div>
+
+                <!-- Insights & Recommendations -->
+                <div class="chart-card full-width insights-card">
+                    <h3>📈 Key Insights & Recommendations</h3>
+                    <div id="insightsContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Page -->
+    <div id="settingsPage" class="page">
+        <div class="container">
+            <h1 class="page-title">Settings & Data Management</h1>
+
+            <!-- Plant Configuration -->
+            <div class="settings-card">
+                <h3>🏭 Plant Configuration</h3>
+                <div class="toggle-group">
+                    <div class="toggle-item">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="toggleEP1" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-text">Enable EP 1 (External Plant 1)</span>
+                        </label>
+                    </div>
+                    <div class="toggle-item">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="toggleEP2" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-text">Enable EP 2 (External Plant 2)</span>
+                        </label>
+                    </div>
+                    <div class="toggle-item">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="toggleCP" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-text">Enable CP (Central Plant)</span>
+                        </label>
+                    </div>
+                    <div class="toggle-item">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="toggleYD" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-text">Enable YD (YD Plant)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Merge YD option -->
+            <div class="settings-card">
+                <h3>🔀 Merge Options</h3>
+                <div style="display:flex; align-items:center; gap:1rem;">
+                    <label class="toggle-label" style="cursor: pointer;">
+                        <input type="checkbox" id="mergeYDCheckboxSettings">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text">Merge YD into CP (3-plant view)</span>
+                    </label>
+                    <div style="color:var(--text-secondary); font-size:0.9rem;">
+                        When enabled YD numbers are added to CP and YD is hidden from lists and charts.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Field Visibility Controls (global) -->
+            <div class="settings-card">
+                <h3>🔎 Field Visibility (global)</h3>
+                <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center;">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="fieldImport" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text">Import (Sachintha)</span>
+                    </label>
+
+                    <label class="toggle-label">
+                        <input type="checkbox" id="fieldDispatched" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text">Local (Dispatched)</span>
+                    </label>
+
+                    <label class="toggle-label">
+                        <input type="checkbox" id="fieldExport" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text">Export</span>
+                    </label>
+
+                    <label class="toggle-label">
+                        <input type="checkbox" id="fieldWasteCusde" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text">Waste (CUSDE)</span>
+                    </label>
+
+                    <label class="toggle-label">
+                        <input type="checkbox" id="fieldWasteAct" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text">Waste (ACT)</span>
+                    </label>
+                </div>
+
+                <p style="color:var(--text-secondary); margin-top:0.75rem;">
+                    Disabling a field will fully hide it from dashboard tables, cards, charts and remove it from all calculations. (GRN remains always enabled.)
+                </p>
+            </div>
+
+            <!-- Data Management -->
+            <div class="settings-card">
+                <h3>📊 Data Management</h3>
+                <div class="button-group">
+                    <button class="btn btn-primary" id="addDataBtn">+ Add New Month Data</button>
+                    <button class="btn btn-secondary" id="resetDataBtn">Reset to Default</button>
+                </div>
+            </div>
+
+            <!-- Data Entry Tables by Plant -->
+            <div class="settings-card">
+                <h3>EP 1 - External Plant 1</h3>
+                <div class="table-responsive">
+                    <table class="data-entry-table">
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>Month</th>
+                                <th>GRN</th>
+                                <th>Import</th>
+                                <th>Local</th>
+                                <th>Export</th>
+                                <th>Waste (CUSDE)</th>
+                                <th>Waste (ACT)</th>
+                                <th>Enabled</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ep1TableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <h3>EP 2 - External Plant 2</h3>
+                <div class="table-responsive">
+                    <table class="data-entry-table">
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>Month</th>
+                                <th>GRN</th>
+                                <th>Import</th>
+                                <th>Local</th>
+                                <th>Export</th>
+                                <th>Waste (CUSDE)</th>
+                                <th>Waste (ACT)</th>
+                                <th>Enabled</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ep2TableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <h3>CP - Central Plant</h3>
+                <div class="table-responsive">
+                    <table class="data-entry-table">
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>Month</th>
+                                <th>GRN</th>
+                                <th>Import</th>
+                                <th>Local</th>
+                                <th>Export</th>
+                                <th>Waste (CUSDE)</th>
+                                <th>Waste (ACT)</th>
+                                <th>Enabled</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cpTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <h3>YD - (YD Plant)</h3>
+                <div class="table-responsive">
+                    <table class="data-entry-table">
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>Month</th>
+                                <th>GRN</th>
+                                <th>Import</th>
+                                <th>Local</th>
+                                <th>Export</th>
+                                <th>Waste (CUSDE)</th>
+                                <th>Waste (ACT)</th>
+                                <th>Enabled</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ydTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Add/Edit -->
+    <div id="dataModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-content">
+            <span class="modal-close" role="button" aria-label="Close modal">&times;</span>
+            <h2 id="modalTitle">Add New Month Data</h2>
+            <form id="dataForm">
+                <div class="form-group">
+                    <label>Year</label>
+                    <input type="number" id="inputYear" value="2025" min="2020" max="2030" required>
+                </div>
+                <div class="form-group">
+                    <label>Month</label>
+                    <select id="inputMonth" required>
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+
+                <h3 style="margin-top: 1.5rem; color: var(--primary-color);">EP 1 Data</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>GRN (ROW YARN)</label>
+                        <input type="number" id="inputEP1GRN" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Import (Sachintha)</label>
+                        <input type="number" id="inputEP1Import" min="0" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Local (Dispatched)</label>
+                        <input type="number" id="inputEP1Dispatched" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Export</label>
+                        <input type="number" id="inputEP1Export" min="0" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Waste (CUSDE)</label>
+                        <input type="number" id="inputEP1WasteCusde" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Waste (ACT)</label>
+                        <input type="number" id="inputEP1WasteAct" min="0" step="0.01" required>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 1.5rem; color: var(--primary-color);">EP 2 Data</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>GRN (ROW YARN)</label>
+                        <input type="number" id="inputEP2GRN" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Import (Sachintha)</label>
+                        <input type="number" id="inputEP2Import" min="0" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Local (Dispatched)</label>
+                        <input type="number" id="inputEP2Dispatched" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Export</label>
+                        <input type="number" id="inputEP2Export" min="0" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Waste (CUSDE)</label>
+                        <input type="number" id="inputEP2WasteCusde" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Waste (ACT)</label>
+                        <input type="number" id="inputEP2WasteAct" min="0" step="0.01" required>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 1.5rem; color: var(--primary-color);">CP Data</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>GRN (ROW YARN)</label>
+                        <input type="number" id="inputCPGRN" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Import (Sachintha)</label>
+                        <input type="number" id="inputCPImport" min="0" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Local (Dispatched)</label>
+                        <input type="number" id="inputCPDispatched" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Export</label>
+                        <input type="number" id="inputCPExport" min="0" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Waste (CUSDE)</label>
+                        <input type="number" id="inputCPWasteCusde" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Waste (ACT)</label>
+                        <input type="number" id="inputCPWasteAct" min="0" step="0.01" required>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 1.5rem; color: var(--primary-color);">YD Data</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>GRN (ROW YARN)</label>
+                        <input type="number" id="inputYDGRN" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Import (Sachintha)</label>
+                        <input type="number" id="inputYDImport" min="0" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Local (Dispatched)</label>
+                        <input type="number" id="inputYDDispatched" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Export</label>
+                        <input type="number" id="inputYDExport" min="0" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Waste (CUSDE)</label>
+                        <input type="number" id="inputYDWasteCusde" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Waste (ACT)</label>
+                        <input type="number" id="inputYDWasteAct" min="0" step="0.01" required>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Data</button>
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
